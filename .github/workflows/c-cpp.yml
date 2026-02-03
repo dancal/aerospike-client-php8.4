@@ -9,6 +9,10 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php-version: ["8.3", "8.4"]
 
     steps:
       # 최신 커밋만 체크아웃하여 속도 향상
@@ -17,30 +21,25 @@ jobs:
           fetch-depth: 1
 
       # PHP와 필요한 의존성 설치
-      - name: Set up PHP and dependencies
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+
+      - name: Set up build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y php-dev php-pear autoconf build-essential git
-          sudo pecl install aerospike
+          sudo apt-get install -y autoconf build-essential pkg-config libssl-dev ca-certificates curl wget tar sudo
 
-      # Aerospike 서버 클라이언트 및 소스 빌드 준비
-      - name: Clone and Build Aerospike Client
+      - name: Build extension
+        working-directory: src
         run: |
-          git clone https://github.com/dancal/aerospike-client-php8.git
-          cd aerospike-client-php8
-          phpize
-          ./configure
-          make
-          sudo make install
+          ./build.sh
 
-      # PHP 설정에 Aerospike 확장 모듈 추가
-      - name: Configure Aerospike Extension
+      - name: Verify extension load
         run: |
-          echo "extension=aerospike.so" | sudo tee -a $(php -i | grep 'Loaded Configuration' | awk '{print $5}')
-          php -m | grep aerospike
+          php -d extension=src/modules/aerospike.so -r 'var_dump(extension_loaded("aerospike"), class_exists("Aerospike"));'
 
-      # Aerospike PHP 클라이언트의 테스트 실행
-      - name: Run Tests
-        working-directory: aerospike-client-php8
+      - name: Run smoke test (no live cluster)
         run: |
-          php ./tests/test.php
+          php -d extension=src/modules/aerospike.so aerospike_smoke_test.php

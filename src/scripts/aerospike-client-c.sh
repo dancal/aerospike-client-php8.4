@@ -66,7 +66,11 @@ install_deb_files() {
   for deb_file in ${DOWNLOAD_DIR}/*.deb; do
     if [ -f "$deb_file" ]; then
       printf "info: installing '%s'\n" "$deb_file"
-      dpkg -i "$deb_file"  # .deb 파일 설치
+      if [ "$(id -u)" -eq 0 ]; then
+        dpkg -i "$deb_file"  # .deb 파일 설치
+      else
+        sudo dpkg -i "$deb_file"  # .deb 파일 설치
+      fi
     fi
   done
 }
