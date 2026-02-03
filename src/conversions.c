@@ -219,6 +219,7 @@ as_status as_bins_to_zval(const as_record* aerospike_record, zval* z_bins, as_er
         ZVAL_NULL(&z_bin_value);
 
         if (as_val_to_zval((as_val*)bin_val, &z_bin_value, err) != AEROSPIKE_OK) {
+            zval_dtor(&z_bin_value);
             goto CLEANUP;
         }
 

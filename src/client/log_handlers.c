@@ -150,7 +150,7 @@ PHP_METHOD(Aerospike, setLogHandler) {
 #endif
 
 	/* If there was a log callback registered before, we need to release it */
-	if AEROSPIKE_G(is_log_callback_registered) {
+	if (AEROSPIKE_G(is_log_callback_registered)) {
 		zval_dtor(&AEROSPIKE_G(log_callback_call_info).function_name);
 		/* This needs to be set to false until the new function is registered */
 		AEROSPIKE_G(is_log_callback_registered) = false;

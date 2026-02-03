@@ -403,12 +403,16 @@ CLEANUP:
 
 /* Frees any memory allocated for the session so far */
 static void free_aerospike_session(aerospike_session_data* session) {
-	/* This should always be true */
-	if (session && session->php_client) {
+	if (!session) {
+		return;
+	}
+
+	if (session->php_client) {
+		/* session->php_client->as_client is a shared/persistent connection managed elsewhere */
 		free(session->php_client);
 		session->php_client = NULL;
-		free(session);
 	}
+	free(session);
 }
 
 static bool verify_session_data(aerospike_session_data* session_data) {
